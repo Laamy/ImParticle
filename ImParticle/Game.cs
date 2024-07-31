@@ -66,8 +66,8 @@ internal class Game : GameEngine
 
             Instance.Level.Background.Add(new SolidObject()
             {
-                Position = new Vector2f(-263, -3),
-                Size = new Vector2f(250, 250),
+                Position = new Vector2f(-260, -3),
+                Size = new Vector2f(250, 235),
                 Color = new Color(0x20, 0x20, 0x20)
             });
         }
