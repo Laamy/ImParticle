@@ -23,6 +23,7 @@ internal class Game : GameEngine
     }
 
     public SolidText debugOverlay;
+    public SolidObject worldBounds;
 
     public override void Initialized()
     {
@@ -50,28 +51,33 @@ internal class Game : GameEngine
                 Text = "KEYBINDS:\n" +
                 "R - Reset interaction matrices\n" +
                 "Scroll - Zoom in & out\n" +
-                "Drag RClick - Move camera"
+                "Drag RClick - Move camera\n" +
+                "Space - Pause the simulation\n" +
+                "Esc - Exit application"
             });
         }
 
         // bounds
         {
             // particle bounds
-            Instance.Level.Background.Add(new SolidObject()
+            worldBounds = new SolidObject()
             {
                 Position = new Vector2f(-3, -3),
                 Size = new Vector2f(ParticleManager.WorldSize + 6, ParticleManager.WorldSize + 6),
                 Color = new Color(0x20, 0x20, 0x20)
-            });
+            };
+
+            Instance.Level.Background.Add(worldBounds);
 
             Instance.Level.Background.Add(new SolidObject()
             {
                 Position = new Vector2f(-260, -3),
-                Size = new Vector2f(250, 235),
+                Size = new Vector2f(250, 275),
                 Color = new Color(0x20, 0x20, 0x20)
             });
         }
 
+        //2500
         // red orange
         Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(2500, Color.Red) });
         Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(2500, new Color(255, 165, 0)) });
@@ -85,11 +91,27 @@ internal class Game : GameEngine
     {
         if (e.Code == Keyboard.Key.R)
             Instance.ParticleMan.interactionMatrix = new Dictionary<(int, int), float>(); // reset
+
+        if (e.Code == Keyboard.Key.Space)
+        {
+            Instance.StepPhysics = !Instance.StepPhysics;
+
+            if (Instance.StepPhysics)
+                worldBounds.Color = new Color(0x20, 0x20, 0x20);
+            else
+                worldBounds.Color = new Color(0x35, 0x20, 0x20);
+        }
+
+        if (e.Code == Keyboard.Key.Escape)
+        {
+            window.Close();
+        }
     }
 
     protected override void OnFixedUpdate()
     {
-        Instance.ParticleMan.DoRuleMatrix();
+        if (Instance.StepPhysics)
+            Instance.ParticleMan.DoRuleMatrix();
     }
 
     protected override void OnUpdate(RenderWindow ctx)
@@ -98,6 +120,15 @@ internal class Game : GameEngine
         ctx.DispatchEvents(); // handle window events
 
         Instance.Level.Draw(ctx); // draw scene
+
+        {
+            CircleShape shape = new CircleShape();
+
+            shape.Radius = 2;
+            shape.Position = Camera.CursorToWorld(ctx, CursorPos) - new Vector2f(2, 2);
+
+            ctx.Draw(shape);
+        }
 
         debugOverlay.Text =
             $"Frames: {CurrentFPS}\n" +
@@ -109,13 +140,17 @@ internal class Game : GameEngine
         ctx.Display(); // swap buffers
     }
 
+    Vector2f CursorPos = new Vector2f(0, 0);
+
     #region Camera Dragging & zooming
-    
+
     bool moving = false;
     Vector2f initMousePos;
 
     public override void MouseMoved(MouseMoveEventArgs e)
     {
+        CursorPos = new Vector2f(e.X, e.Y);
+
         if (moving)
         {
             Vector2f curMousePos = new Vector2f(e.X, e.Y);

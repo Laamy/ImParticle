@@ -71,8 +71,8 @@ class ParticleManager
             }
 
             // velocity
-            p1.Velocity.X = (p1.Velocity.X + fx) * 0.5f;
-            p1.Velocity.Y = (p1.Velocity.Y + fy) * 0.5f;
+            p1.Velocity.X = (p1.Velocity.X + fx) * 0.4f;
+            p1.Velocity.Y = (p1.Velocity.Y + fy) * 0.4f;
 
             // update based on velocity
             p1.Position.X += p1.Velocity.X;
@@ -133,7 +133,7 @@ class ParticleManager
 
                 if (!g.HasValue)
                 {
-                    SetInteraction(i, i2, (250 - Random()) / 1000);
+                    SetInteraction(i, i2, (250 - Random()) / WorldSize*2);
                     Console.WriteLine($"{i}:{i2} {GetInteraction(i, i2)}");
                     goto redo;
                 }

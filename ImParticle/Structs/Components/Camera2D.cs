@@ -1,5 +1,6 @@
 using SFML.Graphics;
 using SFML.System;
+using SFML.Window;
 
 class Camera2D
 {
@@ -41,5 +42,12 @@ class Camera2D
         {
             zoom = value;
         }
+    }
+
+    public Vector2f CursorToWorld(RenderWindow window, Vector2f mousePixelPos)
+    {
+        Vector2f worldPos = window.MapPixelToCoords(new Vector2i((int)mousePixelPos.X, (int)mousePixelPos.Y), view);
+
+        return worldPos;
     }
 }
