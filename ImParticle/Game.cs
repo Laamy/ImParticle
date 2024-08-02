@@ -78,10 +78,28 @@ internal class Game : GameEngine
         }
 
         //2500
-        // red orange
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(1000, Color.Red) });
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(1000, Color.Green) });
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(1000, Color.Blue) });
+        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies()
+        {
+            Particles = Instance.ParticleMan.Create(200, Color.Red)
+        });
+
+        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies()
+        {
+            Particles = Instance.ParticleMan.Create(200, Color.Green)
+        });
+
+        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies()
+        {
+            Particles = Instance.ParticleMan.Create(200, Color.Blue)
+        });
+
+        // for smell
+        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies()
+        {
+            Particles = Instance.ParticleMan.Create(1000, Color.Black),
+            GravityStrength = 80, // test
+            SlowMultiplier = 0.05f
+        });
     }
 
     public override void KeyPressed(KeyEventArgs e)

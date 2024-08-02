@@ -11,6 +11,9 @@ class ParticleSpecies
     public DotObject[] Particles;
 
     // SUB-RULES
+    public int GravityStrength = 80;
+    public float SlowMultiplier = 0.5f;
+    public float RuleDamping = 1.0f;
 }
 
 class ParticleManager
@@ -18,32 +21,6 @@ class ParticleManager
     public ParticleManager(ClientInstance instance)
     {
         Instance = instance;
-    }
-
-    private ClientInstance Instance;
-    private Random ran = new Random();
-
-    public const int WorldSize = 1000;
-
-    public float Random() => ran.Next(0, WorldSize);
-
-    public DotObject[] Create(int num, Color colour)
-    {
-        DotObject[] group = new DotObject[num];
-
-        for (int i = 0; i < num; ++i)
-        {
-            var obj = new DotObject(1)
-            {
-                Color = colour,
-                Position = new Vector2f(Random(), Random())
-            };
-
-            group[i] = obj;
-            Instance.Level.particles.Add(obj);
-        }
-
-        return group;
     }
 
     // my version of this video https://www.youtube.com/watch?v=0Kx4Y9TVMGg
@@ -64,7 +41,7 @@ class ParticleManager
                 float dy = p1.Position.Y - p2.Position.Y;
 
                 float d = (float)Math.Sqrt(dx * dx + dy * dy);
-                if (d > 0 && d < 80) // 80^2
+                if (d > 0 && d < species2.GravityStrength) // 80^2
                 {
                     float F = g * 1 / d;
                     fx += F * dx;
@@ -72,10 +49,14 @@ class ParticleManager
                 }
             });
 
-            // velocity
-            p1.Velocity.X = (p1.Velocity.X + fx) * 0.5f;
-            p1.Velocity.Y = (p1.Velocity.Y + fy) * 0.5f;
+            fx *= species1.RuleDamping;
+            fy *= species1.RuleDamping;
 
+            // velocity
+            p1.Velocity.X = (p1.Velocity.X + fx) * species1.SlowMultiplier;
+            p1.Velocity.Y = (p1.Velocity.Y + fy) * species1.SlowMultiplier;
+
+            // brightness stuff
             {
                 float maxVelocity = 3f;
                 float minVelocity = -3f;
@@ -123,6 +104,32 @@ class ParticleManager
         });
     }
 
+    private ClientInstance Instance;
+    private Random ran = new Random();
+
+    public const int WorldSize = 500;
+
+    public float Random() => ran.Next(0, WorldSize);
+
+    public DotObject[] Create(int num, Color colour)
+    {
+        DotObject[] group = new DotObject[num];
+
+        for (int i = 0; i < num; ++i)
+        {
+            var obj = new DotObject(1)
+            {
+                Color = colour,
+                Position = new Vector2f(Random(), Random())
+            };
+
+            group[i] = obj;
+            Instance.Level.particles.Add(obj);
+        }
+
+        return group;
+    }
+
     public List<ParticleSpecies> ParticleSpecies = new List<ParticleSpecies>();
     public Dictionary<(int, int), float> interactionMatrix = new Dictionary<(int, int), float>();
 
@@ -141,6 +148,7 @@ class ParticleManager
         return null;
     }
 
+    // called 30 times a second at physics step
     public void DoRuleMatrix()
     {
         for (int i = 0; i < ParticleSpecies.Count; i++)
