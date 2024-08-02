@@ -79,12 +79,9 @@ internal class Game : GameEngine
 
         //2500
         // red orange
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(2500, Color.Red) });
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(2500, new Color(255, 165, 0)) });
-
-        //
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(2500, Color.Yellow) });
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(2500, Color.Green) });
+        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(1000, Color.Red) });
+        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(1000, Color.Green) });
+        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies() { Particles = Instance.ParticleMan.Create(1000, Color.Blue) });
     }
 
     public override void KeyPressed(KeyEventArgs e)
@@ -99,7 +96,7 @@ internal class Game : GameEngine
             if (Instance.StepPhysics)
                 worldBounds.Color = new Color(0x20, 0x20, 0x20);
             else
-                worldBounds.Color = new Color(0x35, 0x20, 0x20);
+                worldBounds.Color = new Color(0x25, 0x20, 0x20);
         }
 
         if (e.Code == Keyboard.Key.Escape)

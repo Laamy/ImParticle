@@ -9,6 +9,8 @@ class ParticleSpecies
 {
     public Color Colour;
     public DotObject[] Particles;
+
+    // SUB-RULES
 }
 
 class ParticleManager
@@ -31,7 +33,7 @@ class ParticleManager
 
         for (int i = 0; i < num; ++i)
         {
-            var obj = new DotObject(2)
+            var obj = new DotObject(1)
             {
                 Color = colour,
                 Position = new Vector2f(Random(), Random())
@@ -54,7 +56,7 @@ class ParticleManager
             float fx = 0;
             float fy = 0;
 
-            for (int i2 = 0; i2 < species2.Particles.Length; ++i2)
+            Parallel.For(0, species2.Particles.Length, (i2) =>
             {
                 var p2 = species2.Particles[i2];
 
@@ -68,11 +70,30 @@ class ParticleManager
                     fx += F * dx;
                     fy += F * dy;
                 }
-            }
+            });
 
             // velocity
-            p1.Velocity.X = (p1.Velocity.X + fx) * 0.4f;
-            p1.Velocity.Y = (p1.Velocity.Y + fy) * 0.4f;
+            p1.Velocity.X = (p1.Velocity.X + fx) * 0.5f;
+            p1.Velocity.Y = (p1.Velocity.Y + fy) * 0.5f;
+
+            {
+                float maxVelocity = 3f;
+                float minVelocity = -3f;
+
+                float normalizedVelocityX = (p1.Velocity.X - minVelocity) / (maxVelocity - minVelocity);
+                float normalizedVelocityY = (p1.Velocity.Y - minVelocity) / (maxVelocity - minVelocity);
+                
+                float combinedVelocity = (normalizedVelocityX + normalizedVelocityY) / 2f;
+
+                int alpha = (int)(combinedVelocity * 240) + 15;
+
+                if (alpha < 15) alpha = 15;
+                if (alpha > 255) alpha = 255;
+
+                Color colorWithAlpha = new Color(p1.Color.R, p1.Color.G, p1.Color.B, (byte)alpha);
+
+                p1.Color = colorWithAlpha;
+            }
 
             // update based on velocity
             p1.Position.X += p1.Velocity.X;
@@ -83,7 +104,6 @@ class ParticleManager
                 p1.Velocity.X = 0;
                 p1.Position.X = WorldSize;
             }
-
             if (p1.Position.Y >= WorldSize)
             {
                 p1.Velocity.Y = 0;
@@ -95,7 +115,6 @@ class ParticleManager
                 p1.Velocity.Y = 0;
                 p1.Position.Y = 0;
             }
-
             if (p1.Position.X <= 0)
             {
                 p1.Velocity.X = 0;
