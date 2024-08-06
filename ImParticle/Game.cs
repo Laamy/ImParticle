@@ -27,7 +27,7 @@ internal class Game : GameEngine
 
     public override void Initialized()
     {
-        Instance.ParticleMan = new ParticleManager(Instance);
+        Instance.ParticleMan = new PhysicsLevel(Instance);
 
         // lets add some text/debug objects
         {
@@ -37,7 +37,7 @@ internal class Game : GameEngine
                 Size = 16,
                 Color = Color.White,
                 Font = Instance.FontRepos.GetFont("Arial"),
-                Text = "Frames: 0"
+                Text = ""
             };
 
             Instance.Level.UI.Add(debugOverlay);
@@ -48,12 +48,7 @@ internal class Game : GameEngine
                 Size = 16,
                 Color = Color.White,
                 Font = Instance.FontRepos.GetFont("Arial"),
-                Text = "KEYBINDS:\n" +
-                "R - Reset interaction matrices\n" +
-                "Scroll - Zoom in & out\n" +
-                "Drag RClick - Move camera\n" +
-                "Space - Pause the simulation\n" +
-                "Esc - Exit application"
+                Text = ""
             });
         }
 
@@ -63,7 +58,7 @@ internal class Game : GameEngine
             worldBounds = new SolidObject()
             {
                 Position = new Vector2f(-3, -3),
-                Size = new Vector2f(ParticleManager.WorldSize + 6, ParticleManager.WorldSize + 6),
+                Size = new Vector2f(PhysicsLevel.WorldSize + 6, PhysicsLevel.WorldSize + 6),
                 Color = new Color(0x20, 0x20, 0x20)
             };
 
@@ -80,32 +75,30 @@ internal class Game : GameEngine
         //2500
         Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies()
         {
-            Particles = Instance.ParticleMan.Create(200, Color.Red)
-        });
-
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies()
-        {
-            Particles = Instance.ParticleMan.Create(200, Color.Green)
-        });
-
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies()
-        {
-            Particles = Instance.ParticleMan.Create(200, Color.Blue)
-        });
-
-        // for smell
-        Instance.ParticleMan.ParticleSpecies.Add(new ParticleSpecies()
-        {
-            Particles = Instance.ParticleMan.Create(1000, Color.Black),
-            GravityStrength = 80, // test
-            SlowMultiplier = 0.05f
+            Particles = Instance.ParticleMan.Create(2, Color.Red),
+            info = new ParticleInfo()
+            {
+                RuleDamping = 1
+            }
         });
     }
 
     public override void KeyPressed(KeyEventArgs e)
     {
         if (e.Code == Keyboard.Key.R)
-            Instance.ParticleMan.interactionMatrix = new Dictionary<(int, int), float>(); // reset
+        {
+            Dictionary<(int, int), float> matrices = new Dictionary<(int, int), float>(Instance.ParticleMan.interactMatrices);
+
+            foreach (var node in Instance.ParticleMan.interactMatrices)
+            {
+                if (!Instance.ParticleMan.ParticleSpecies[node.Key.Item1].info.SpecialVariant &&
+                    !Instance.ParticleMan.ParticleSpecies[node.Key.Item2].info.SpecialVariant
+                )
+                    matrices.Remove(node.Key);
+            }
+
+            Instance.ParticleMan.interactMatrices = new Dictionary<(int, int), float>(matrices);
+        }
 
         if (e.Code == Keyboard.Key.Space)
         {
@@ -125,6 +118,12 @@ internal class Game : GameEngine
 
     protected override void OnFixedUpdate()
     {
+        if (PushFromCursor)
+        {
+
+            Instance.ParticleMan.Rule(Instance.guidata.CursorPos, new ParticleInfo());
+        }
+
         if (Instance.StepPhysics)
             Instance.ParticleMan.DoRuleMatrix();
     }
@@ -136,11 +135,13 @@ internal class Game : GameEngine
 
         Instance.Level.Draw(ctx); // draw scene
 
+        // visualize effect distance
         {
             CircleShape shape = new CircleShape();
 
-            shape.Radius = 2;
-            shape.Position = Camera.CursorToWorld(ctx, CursorPos) - new Vector2f(2, 2);
+            shape.FillColor = new Color(255, 255, 255, 128); // temp colour
+            shape.Radius = 20;
+            shape.Position = Camera.CursorToWorld(ctx, Instance.guidata.CursorPos) - new Vector2f(shape.Radius, shape.Radius);
 
             ctx.Draw(shape);
         }
@@ -150,12 +151,10 @@ internal class Game : GameEngine
             $"PhysicSteps: {CurrentPPS}\n" +
             $"\n" +
             $"SPECIES: {Instance.ParticleMan.ParticleSpecies.Count}\n" +
-            $"ATOMS: {Instance.Level.particles.Count}\n";
+            $"ATOMS: {Instance.Level.Particles.Count}\n";
 
         ctx.Display(); // swap buffers
     }
-
-    Vector2f CursorPos = new Vector2f(0, 0);
 
     #region Camera Dragging & zooming
 
@@ -164,7 +163,7 @@ internal class Game : GameEngine
 
     public override void MouseMoved(MouseMoveEventArgs e)
     {
-        CursorPos = new Vector2f(e.X, e.Y);
+        Instance.guidata.CursorPos = new Vector2f(e.X, e.Y);
 
         if (moving)
         {
@@ -177,6 +176,8 @@ internal class Game : GameEngine
         }
     }
 
+    bool PushFromCursor = false;
+
     public override void MouseButtonPressed(MouseButtonEventArgs e)
     {
         if (e.Button == Mouse.Button.Right)
@@ -184,6 +185,9 @@ internal class Game : GameEngine
             moving = true;
             initMousePos = new Vector2f(e.X, e.Y);
         }
+
+        if (e.Button == Mouse.Button.Left)
+            PushFromCursor = true;
     }
 
     public override void MouseButtonReleased(MouseButtonEventArgs e)
@@ -192,6 +196,9 @@ internal class Game : GameEngine
         {
             moving = false;
         }
+
+        if (e.Button == Mouse.Button.Left)
+            PushFromCursor = false;
     }
 
     // zooming
